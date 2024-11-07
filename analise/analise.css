@@ -1,0 +1,83 @@
+/* Background com gradiente e imagem */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: url('../images/fundo.jpg'); /* Caminho para a imagem */
+    background-size: cover;
+    background-position: center;
+    color: white;
+    text-align: center;
+    text-shadow: 
+        -2px -2px 0 #000, /* Sombra superior esquerda */
+         2px -2px 0 #000, /* Sombra superior direita */
+        -2px  2px 0 #000, /* Sombra inferior esquerda */
+         2px  2px 0 #000; /* Sombra inferior direita */
+}
+
+/* Estilo do cabeçalho */
+.header {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Estilo do título principal */
+h1 {
+    background-color: #00a8e8;
+    color: white;
+    padding: 10px 20px;
+    border: 2px solid #ffffff; /* Borda com 2px de espessura e cor branca */
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-shadow: 
+        -0.5px -0.5px 0 #000, /* Sombra superior esquerda */
+         0.5px -0.5px 0 #000, /* Sombra superior direita */
+        -0.5px  0.5px 0 #000, /* Sombra inferior esquerda */
+         0.5px  0.5px 0 #000; /* Sombra inferior direita */
+    max-width: 600px;
+    margin: 0 auto;
+    margin-bottom: 20px;
+}
+
+/* Contêiner centralizado para os itens */
+.container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center; /* Centraliza os itens horizontalmente */
+    gap: 10px;
+    width: 90%; /* Largura ajustável conforme necessário */
+    height: 400hv;
+    max-width: 900hv;
+    margin: 0 auto; /* Centraliza o contêiner na tela */
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.6); /* Fundo com transparência */
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Estilo dos itens de texto */
+.container h1, .container .item {
+    background-color: #00a8e8;
+    color: white;
+    padding: 10px 20px;
+    border: 2px solid #ffffff;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-shadow: 
+        -0.5px -0.5px 0 #000, /* Sombra superior esquerda */
+         0.5px -0.5px 0 #000, /* Sombra superior direita */
+        -0.5px  0.5px 0 #000, /* Sombra inferior esquerda */
+         0.5px  0.5px 0 #000; /* Sombra inferior direita */
+    width: 100%;
+    text-align: left;
+}
+
+/* Efeito de hover nos itens */
+.container .item:hover {
+    background-color: #008bb5; /* Cor mais escura no hover */
+}
