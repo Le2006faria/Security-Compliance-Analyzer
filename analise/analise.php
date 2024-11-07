@@ -311,7 +311,7 @@
                     echo "$protocolNameSSL_TLS possui um valor desconhecido: DisabledByDefault=$disabledStatusSSL_TLS, Enabled=$enabledStatusSSL_TLS<br>";
                 }
             }
-            //teste: foi conferido por diversos caminhos, como: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Client->porém as chaves estaram indefinidas.
+            //teste: foi conferido por diversos caminhos, como: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Client->porém as chaves estavam indefinidas.
             ?>
         </h1>
 
