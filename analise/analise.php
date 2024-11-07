@@ -131,9 +131,6 @@
 
         <h1>
             <?php
-            //Se a chave não existir, você pode criá-la clicando com o botão direito na pasta WDigest (para acessar: Win+R, em seguida escreva: regedit), selecionando Novo > Valor DWORD (32 bits), e nomeando-a como UseLogonCredential.
-            //Defina o valor da chave UseLogonCredential para 0 para desativar o cache de credenciais.
-
             // Comando para verificar o valor da chave de registro UseLogonCredential
             $commandWD = 'reg query "HKLM\System\CurrentControlSet\Control\SecurityProviders\WDigest" /v UseLogonCredential';
 
