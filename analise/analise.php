@@ -132,7 +132,7 @@
         <h1>
             <?php
             // Comando para verificar o valor da chave de registro UseLogonCredential
-            $commandWD = 'reg query "HKLM\System\CurrentControlSet\Control\SecurityProviders\WDigest" /v UseLogonCredential';
+            $commandWD = 'reg query "HKLM\System\CurrentControlSet\Control\SecurityProviders\WDigest" /s /v UseLogonCredential';
 
             // Executa o comando e captura a saída
             exec($commandWD, $outputWD, $return_varWD);
@@ -224,10 +224,6 @@
             //teste: foi conferido no caminho: HKLM\SOFTWARE\Microsoft\Windows Script Host, porém a chave estava indefinida.
             ?>
         </h1>
-
-    </div>
-
-    <div class="container">
 
         <h1>
             <?php
@@ -353,7 +349,7 @@
         <h1>
             <?php
             // Comando para verificar o valor da chave de registro RunAsPPL
-            $commandCheckPPL = 'reg query "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v RunAsPPL';
+            $commandCheckPPL = 'reg query "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /s /v RunAsPPL';
 
             // Executa o comando e captura a saída
             exec($commandCheckPPL, $outputCheckPPL, $return_varCheckPPL);
@@ -386,34 +382,46 @@
 
         <h1>
             <?php
-            // Comando para verificar o valor da chave de registro NetbiosOptions
-            $commandCheckNetbios = 'reg query "HKLM\SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces\Tcpip_{GUID}" /v NetbiosOptions';
+            // Comando para listar todas as interfaces Tcpip_
+            $command = 'reg query "HKLM\SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces" /s /f Tcpip_ 2>&1';
+            $output = shell_exec($command);
 
-            // Executa o comando e captura a saída
-            exec($commandCheckNetbios, $outputCheckNetbios, $return_varCheckNetbios);
+            // Verifica se o comando executou com sucesso
+            if ($output) {
+                // Divide a saída em linhas
+                $lines = explode("\n", $output);
 
-            $key_existsNetbios = false;
-            $disabledNetbios = false;
-            foreach ($outputCheckNetbios as $lineCheckNetbios) {
-                if (strpos($lineCheckNetbios, 'NetbiosOptions') !== false) {
-                    $key_existsNetbios = true;
-                    if (strpos($lineCheckNetbios, '0x2') !== false) {
-                        $disabledNetbios = true;
+                foreach ($lines as $line) {
+                    // Verifica se a linha contém o caminho de uma subchave Tcpip_
+                    if (strpos($line, 'Tcpip_') !== false) {
+                        // Remover espaços extras da linha
+                        $subKey = trim($line);
+
+                        // Executa o comando para verificar se a subchave contém NetbiosOptions
+                        $checkCommand = "reg query \"$subKey\" /v NetbiosOptions 2>&1";
+                        $checkOutput = shell_exec($checkCommand);
+
+                        // Verifica se o comando retornou o valor NetbiosOptions
+                        if (strpos($checkOutput, "NetbiosOptions") !== false) {
+                            // Extrai o valor de NetbiosOptions da saída
+                            preg_match('/\s+NetbiosOptions\s+REG_DWORD\s+0x(\w+)/', $checkOutput, $matches);
+                            $value = $matches[1] ?? null;
+
+                            // Verifica se o valor é 0x2
+                            if ($value === '2') {
+                                echo "O NetBIOS está desativado na interface: $subKey\n";
+                            } else {
+                                echo "O NetBIOS não está desativado na interface: $subKey\n";
+                            }
+                        } else {
+                            echo "A chave NetbiosOptions não existe para a interface: $subKey\n";
+                        }
                     }
-                    break;
-                }
-            }
-
-            // Exibe o resultado
-            if ($key_existsNetbios) {
-                if ($disabledNetbios) {
-                    echo "O NetBIOS está desativado.";
-                } else {
-                    echo "O NetBIOS não está desativado.";
                 }
             } else {
-                echo "A chave de registro NetbiosOptions não existe ou está com valor indefinido.";
+                echo "Erro ao executar o comando inicial para listar interfaces.\n";
             }
+
             //teste: foi conferido no caminho: HKLM\SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces\Tcpip_{GUID}, porém a chave estava indefinida.
             ?>
         </h1>
@@ -421,7 +429,7 @@
         <h1>
             <?php
             // Comando para verificar o valor da chave de registro EnableMultiCast
-            $commandCheckMultiCast = 'reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /v EnableMultiCast';
+            $commandCheckMultiCast = 'reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /s /v EnableMultiCast';
 
             // Executa o comando e captura a saída
             exec($commandCheckMultiCast, $outputCheckMultiCast, $return_varCheckMultiCast);

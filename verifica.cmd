@@ -70,24 +70,30 @@ echo .
 echo Verificando os perfis de firewall...
 
 rem Verificar o perfil de firewall Domain
-powershell.exe -Command "if (Get-NetFirewallProfile -Name Domain) { Get-NetFirewallProfile -Name Domain | Format-Table Name, Enabled } else { exit 1 }" | findstr /I /C:"Domain" /C:"Enabled" /C:"True" >nul
-if %errorlevel%==0 (
+for /f "tokens=*" %%A in ('powershell.exe -Command "(Get-NetFirewallProfile -Name Domain).Enabled"') do (
+    set "DomainStatus=%%A"
+)
+if "%DomainStatus%"=="True" (
     echo O perfil de firewall Domain esta habilitado.
 ) else (
     echo O perfil de firewall Domain esta desabilitado ou nao existe.
 )
 
 rem Verificar o perfil de firewall Public
-powershell.exe -Command "if (Get-NetFirewallProfile -Name Public) { Get-NetFirewallProfile -Name Public | Format-Table Name, Enabled } else { exit 1 }" | findstr /I /C:"Public" /C:"Enabled" /C:"True" >nul
-if %errorlevel%==0 (
+for /f "tokens=*" %%A in ('powershell.exe -Command "(Get-NetFirewallProfile -Name Public).Enabled"') do (
+    set "PublicStatus=%%A"
+)
+if "%PublicStatus%"=="True" (
     echo O perfil de firewall Public esta habilitado.
 ) else (
     echo O perfil de firewall Public esta desabilitado ou nao existe.
 )
 
 rem Verificar o perfil de firewall Private
-powershell.exe -Command "if (Get-NetFirewallProfile -Name Private) { Get-NetFirewallProfile -Name Private | Format-Table Name, Enabled } else { exit 1 }" | findstr /I /C:"Private" /C:"Enabled" /C:"True" >nul
-if %errorlevel%==0 (
+for /f "tokens=*" %%A in ('powershell.exe -Command "(Get-NetFirewallProfile -Name Private).Enabled"') do (
+    set "PrivateStatus=%%A"
+)
+if "%PrivateStatus%"=="True" (
     echo O perfil de firewall Private esta habilitado.
 ) else (
     echo O perfil de firewall Private esta desabilitado ou nao existe.
@@ -101,7 +107,7 @@ echo Verificando o valor da chave de registro UseLogonCredential...
 reg query "HKLM\System\CurrentControlSet\Control\SecurityProviders\WDigest" /v UseLogonCredential >nul 2>&1
 if %errorlevel%==0 (
     rem Obtém o valor da chave de registro
-    for /f "tokens=3" %%A in ('reg query "HKLM\System\CurrentControlSet\Control\SecurityProviders\WDigest" /v UseLogonCredential ^| findstr /i "UseLogonCredential"') do (
+    for /f "tokens=3" %%A in ('reg query "HKLM\System\CurrentControlSet\Control\SecurityProviders\WDigest" /s /v UseLogonCredential ^| findstr /i "UseLogonCredential"') do (
         if "%%A"=="0x0" (
             echo Tudo certo, a chave esta desativada.
         ) else (
@@ -208,15 +214,15 @@ echo Verificando o valor da chave de registro RunAsPPL...
 rem Verificar se a chave de registro existe
 reg query "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v RunAsPPL >nul 2>&1
 if %errorlevel%==0 (
-    rem Ler o valor da chave de registro
-    for /f "tokens=3" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v RunAsPPL 2^>nul') do (
+    rem Iterar sobre as possíveis chaves de registro
+    for /f "tokens=3" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /s /v RunAsPPL 2^>nul') do (
         rem Verificar se o valor está ativado (0x1 ou 0x2)
-        if "%%A"=="0x1" (
+        if "%%A"=="1" (
             echo A protecao LSA esta ativada.
-        ) else if "%%A"=="0x2" (
+        ) else if "%%A"=="2" (
             echo A protecao LSA esta ativada.
         ) else (
-            echo A protecao LSA nao esta ativada.
+            echo A protecao LSA nao esta ativada. Valor encontrado: %%A
         )
     )
 ) else (
@@ -227,23 +233,29 @@ echo .
 
 echo Verificando o valor da chave de registro NetbiosOptions...
 
-rem Substitua {GUID} pelo valor correto do seu ambiente
-set GUID={GUID}
+rem 
+set GUID={NetbiosOptions}
 
-rem Verificar se a chave de registro existe
-reg query "HKLM\SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces\Tcpip_%GUID%" /v NetbiosOptions >nul 2>&1
-if %errorlevel%==0 (
-    rem Ler o valor da chave de registro
-    for /f "tokens=3" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces\Tcpip_%GUID%" /v NetbiosOptions 2^>nul') do (
-        rem Verificar se o NetBIOS está desativado (valor 0x2)
-        if "%%A"=="0x2" (
-            echo O NetBIOS esta desativado.
-        ) else (
-            echo O NetBIOS nao esta desativado.
+rem 
+set GUID={NetbiosOptions}
+
+rem Listar todas as interfaces Tcpip_ para verificar se alguma tem NetBIOS desativado (valor 0x2)
+for /f "tokens=*" %%G in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces" /s /f Tcpip_ 2^>nul') do (
+    rem Verificar se a chave atual contém o valor NetbiosOptions
+    reg query "%%G" /v NetbiosOptions >nul 2>&1
+    if %errorlevel%==0 (
+        rem Ler o valor da chave NetbiosOptions
+        for /f "tokens=3" %%A in ('reg query "%%G" /v NetbiosOptions 2^>nul') do (
+            rem Verificar se o valor é 0x2
+            if "%%A"=="0x2" (
+                echo O NetBIOS esta desativado na interface: %%G
+            ) else (
+                echo O NetBIOS nao esta desativado na interface: %%G
+            )
         )
+    ) else (
+        echo A chave NetbiosOptions nao existe para a interface: %%G
     )
-) else (
-    echo A chave de registro NetbiosOptions nao existe ou esta com valor indefinido.
 )
 
 echo .
@@ -254,7 +266,7 @@ rem Verificar se a chave de registro existe
 reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /v EnableMultiCast >nul 2>&1
 if %errorlevel%==0 (
     rem Ler o valor da chave de registro
-    for /f "tokens=3" %%A in ('reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /v EnableMultiCast 2^>nul') do (
+    for /f "tokens=3" %%A in ('reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /s /v EnableMultiCast 2^>nul') do (
         rem Verificar se o LLMNR esta desativado (valor 0x0)
         if "%%A"=="0x0" (
             echo O LLMNR esta desativado.

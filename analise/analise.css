@@ -3,10 +3,9 @@ body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background: url('../images/fundo.jpg'); /* Caminho para a imagem */
-    background-size: cover;
-    background-position: center;
+    background: url('../images/fundo.jpg') center/cover no-repeat;
     color: white;
+    min-height: 100vh;
     text-align: center;
     text-shadow: 
         -2px -2px 0 #000, /* Sombra superior esquerda */
@@ -27,33 +26,37 @@ h1 {
     background-color: #00a8e8;
     color: white;
     padding: 10px 20px;
-    border: 2px solid #ffffff; /* Borda com 2px de espessura e cor branca */
+    border: 2px solid #ffffff;
     border-radius: 5px;
     font-size: 1rem;
     cursor: pointer;
-    transition: background-color 0.3s;
-    text-shadow: 
-        -0.5px -0.5px 0 #000, /* Sombra superior esquerda */
-         0.5px -0.5px 0 #000, /* Sombra superior direita */
-        -0.5px  0.5px 0 #000, /* Sombra inferior esquerda */
-         0.5px  0.5px 0 #000; /* Sombra inferior direita */
     max-width: 600px;
     margin: 0 auto;
     margin-bottom: 20px;
+    text-shadow: 
+        -0.5px -0.5px 0 #000, 
+         0.5px -0.5px 0 #000, 
+        -0.5px  0.5px 0 #000, 
+         0.5px  0.5px 0 #000;
+    transition: background-color 0.3s;
+}
+
+/* Efeito de hover no título principal */
+h1:hover {
+    background-color: #008bb5; /* Cor mais escura no hover */
 }
 
 /* Contêiner centralizado para os itens */
 .container {
     display: flex;
-    justify-content: space-around;
-    align-items: center; /* Centraliza os itens horizontalmente */
+    flex-direction: column; /* Organiza os itens em uma coluna */
+    align-items: center;
     gap: 10px;
-    width: 90%; /* Largura ajustável conforme necessário */
-    height: 400hv;
-    max-width: 900hv;
-    margin: 0 auto; /* Centraliza o contêiner na tela */
+    width: 90vw;
+    max-width: 600px; /* Limita a largura do contêiner */
+    margin: 0 auto;
     padding: 20px;
-    background-color: rgba(0, 0, 0, 0.6); /* Fundo com transparência */
+    background-color: rgba(0, 0, 0, 0.6);
     border-radius: 10px;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
 }
@@ -67,17 +70,20 @@ h1 {
     border-radius: 5px;
     font-size: 1rem;
     cursor: pointer;
+    width: 100%; /* Ocupa a largura completa do contêiner */
+    text-align: left;
+    overflow-wrap: break-word; /* Quebra as palavras longas */
+    word-wrap: break-word; /* Quebra palavras longas para IE */
+    word-break: break-word; /* Suporte adicional para quebra de palavra */
     transition: background-color 0.3s;
     text-shadow: 
-        -0.5px -0.5px 0 #000, /* Sombra superior esquerda */
-         0.5px -0.5px 0 #000, /* Sombra superior direita */
-        -0.5px  0.5px 0 #000, /* Sombra inferior esquerda */
-         0.5px  0.5px 0 #000; /* Sombra inferior direita */
-    width: 100%;
-    text-align: left;
+        -0.5px -0.5px 0 #000, 
+         0.5px -0.5px 0 #000, 
+        -0.5px  0.5px 0 #000, 
+         0.5px  0.5px 0 #000;
 }
 
 /* Efeito de hover nos itens */
-.container .item:hover {
-    background-color: #008bb5; /* Cor mais escura no hover */
+.container .item:hover, .container h1:hover {
+    background-color: #008bb5;
 }
