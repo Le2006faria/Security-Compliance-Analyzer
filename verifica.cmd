@@ -194,26 +194,23 @@ rem
 echo .
 
 echo Verificando o valor da chave de registro Enabled
-reg query "HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings" /v Enabled >nul 2>&1
 
-rem Verifica se o comando foi bem-sucedido e se a chave existe
-if %errorlevel% neq 0 (
-    echo A chave de registro Enabled nao existe ou esta com valor indefinido.
+rem Verifica se a chave de registro existe e consulta seu valor
+for /f "tokens=3" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings" /v Enabled 2^>nul') do set chave=%%A
+
+rem Verifica se o comando foi bem-sucedido e se a chave foi encontrada
+if not defined chave (
+    echo A chave de registro Enabled nao existe ou esta vazia.
 ) else (
-    rem Verifica se a chave tem valor vazio
-    for /f "tokens=3" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings" /v Enabled') do set chave=%%A
-
-    rem Verifica se a chave tem valor vazio
-    if "%chave%"=="" (
-        echo A chave de registro Enabled esta vazia.
+    rem Verifica se o valor da chave é 0x0 (desativado)
+    if /i "%chave%"=="0x0" (
+        echo O Windows Script Host esta desativado.
+    ) else if /i "%chave%"=="0x1" (
+        rem Se for 0x1, significa que está ativado
+        echo O Windows Script Host esta ativado.
     ) else (
-        rem Verifica o valor da chave
-        echo %chave% | findstr /i "0x0" >nul
-        if %errorlevel% equ 0 (
-            echo O Windows Script Host esta desativado.
-        ) else (
-            echo O Windows Script Host esta ativado.
-        )
+        rem Caso o valor seja diferente de 0x0 ou 0x1, considera-se que o valor não é esperado
+        echo O valor da chave Enabled e inesperado ou invalido: %chave%
     )
 )
 
