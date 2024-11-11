@@ -3,18 +3,24 @@ body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background:
-                url('images/fundo.jpg'); /* Caminho para a imagem */
-    background-size: cover;
+    background: url('images/oni.png') no-repeat center center fixed; 
+    /* Caminho para a imagem, não repetindo e centralizando fixo */
+    background-size: cover; 
+    /* A imagem de fundo será redimensionada para cobrir toda a tela */
     background-position: center;
     color: white;
     text-align: center;
-    text-shadow: 
-        -2px -2px 0 #000, /* Sombra superior esquerda */
-         2px -2px 0 #000, /* Sombra superior direita */
-        -2px  2px 0 #000, /* Sombra inferior esquerda */
-         2px  2px 0 #000; /* Sombra inferior direita */
+    text-shadow:
+        -2px -2px 0 #000,  /* Sombra superior esquerda */
+        2px -2px 0 #000,   /* Sombra superior direita */
+        -2px 2px 0 #000,   /* Sombra inferior esquerda */
+        2px 2px 0 #000;    /* Sombra inferior direita */
+    overflow: hidden; 
+    /* Impede a rolagem na página */
+    height: 100vh; 
+    /* Garante que a altura do body ocupe 100% da altura da janela */
 }
+
 
 .container {
     display: flex;
@@ -27,25 +33,55 @@ body {
 .header {
     font-size: 2rem;
     font-weight: bold;
-    margin-bottom: 20px;
+    margin-bottom: 40px;
 }
 
 button {
-    background-color: #00a8e8;
+    background-color: #00597c;
     color: white;
     padding: 10px 20px;
-    border: 2px solid #ffffff; /* Borda com 2px de espessura e cor branca */
+    border: 2px solid #ffffff;
+    /* Borda com 2px de espessura e cor branca */
     border-radius: 5px;
     font-size: 1rem;
     cursor: pointer;
     transition: background-color 0.3s;
-    text-shadow: 
-        -0.5px -0.5px 0 #000, /* Sombra superior esquerda */
-         0.5px -0.5px 0 #000, /* Sombra superior direita */
-        -0.5px  0.5px 0 #000, /* Sombra inferior esquerda */
-         0.5px  0.5px 0 #000; /* Sombra inferior direita */
+    text-shadow:
+        -0.5px -0.5px 0 #000,
+        /* Sombra superior esquerda */
+        0.5px -0.5px 0 #000,
+        /* Sombra superior direita */
+        -0.5px 0.5px 0 #000,
+        /* Sombra inferior esquerda */
+        0.5px 0.5px 0 #000;
+    /* Sombra inferior direita */
 }
 
 button:hover {
-    background-color: #0077b6;
+    background-color: #002534;
+}
+
+/* Estilos para a barra de progresso */
+.progress {
+    width: 80%; /* Reduz a largura da barra de progresso */
+    background-color: #f3f3f3;
+    border-radius: 10px;
+    margin-top: 200px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: block;
+    border: 2px solid #000000;
+    font-size: 1rem;
+}
+
+.progress-bar {
+    height: 20px; /* Diminuído a altura da barra */
+    background-color: #4caf50;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+    line-height: 20px; /* Alinha o texto com a nova altura */
+    font-weight: bold;
 }

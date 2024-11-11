@@ -3,7 +3,11 @@ body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background: url('../images/fundo.jpg') center/cover no-repeat;
+    background: url('../images/oni.png') no-repeat center center fixed; 
+    /* Caminho para a imagem, não repetindo e centralizando fixo */
+    background-size: cover; 
+    /* A imagem de fundo será redimensionada para cobrir toda a tela */
+    background-position: center;
     color: white;
     min-height: 100vh;
     text-align: center;
@@ -23,7 +27,7 @@ body {
 
 /* Estilo do título principal */
 h1 {
-    background-color: #00a8e8;
+    background-color: #00597c;
     color: white;
     padding: 10px 20px;
     border: 2px solid #ffffff;
@@ -43,7 +47,7 @@ h1 {
 
 /* Efeito de hover no título principal */
 h1:hover {
-    background-color: #008bb5; /* Cor mais escura no hover */
+    background-color: #002534; /* Cor mais escura no hover */
 }
 
 /* Contêiner centralizado para os itens */
@@ -63,7 +67,7 @@ h1:hover {
 
 /* Estilo dos itens de texto */
 .container h1, .container .item {
-    background-color: #00a8e8;
+    background-color: #00597c;
     color: white;
     padding: 10px 20px;
     border: 2px solid #ffffff;
@@ -85,7 +89,7 @@ h1:hover {
 
 /* Efeito de hover nos itens */
 .container .item:hover, .container h1:hover {
-    background-color: #008bb5;
+    background-color: #002534;
 }
 
 .item p {
