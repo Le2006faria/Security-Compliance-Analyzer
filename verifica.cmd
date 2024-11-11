@@ -193,6 +193,32 @@ rem
 
 echo .
 
+echo Verificando o valor da chave de registro Enabled
+reg query "HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings" /v Enabled >nul 2>&1
+
+rem Verifica se o comando foi bem-sucedido e se a chave existe
+if %errorlevel% neq 0 (
+    echo A chave de registro Enabled nao existe ou esta com valor indefinido.
+) else (
+    rem Verifica se a chave tem valor vazio
+    for /f "tokens=3" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings" /v Enabled') do set chave=%%A
+
+    rem Verifica se a chave tem valor vazio
+    if "%chave%"=="" (
+        echo A chave de registro Enabled esta vazia.
+    ) else (
+        rem Verifica o valor da chave
+        echo %chave% | findstr /i "0x0" >nul
+        if %errorlevel% equ 0 (
+            echo O Windows Script Host esta desativado.
+        ) else (
+            echo O Windows Script Host esta ativado.
+        )
+    )
+)
+
+echo.
+
 echo Verificando o status do protocolo SMB1...
 
 rem Executar o comando PowerShell e armazenar o resultado

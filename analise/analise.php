@@ -433,7 +433,7 @@
 
             // Executa o comando e captura a saída
             exec($commandCheckSMB, $outputCheckSMB, $return_varCheckSMB);
-
+            
             $key_existsSMB = false;
             $disabledSMB = false;
             foreach ($outputCheckSMB as $lineCheckSMB) {
@@ -446,7 +446,7 @@
                     break;
                 }
             }
-
+            
             // Exibe o resultado
             if ($key_existsSMB) {
                 if ($disabledSMB) {
