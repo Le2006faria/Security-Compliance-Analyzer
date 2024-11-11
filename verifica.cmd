@@ -196,7 +196,7 @@ echo .
 echo Verificando o valor da chave de registro Enabled
 
 rem Verifica se a chave de registro existe e consulta seu valor
-for /f "tokens=3" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings" /v Enabled 2^>nul') do set chave=%%A
+for /f "tokens=3" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings" /s /v Enabled 2^>nul') do set chave=%%A
 
 rem Verifica se o comando foi bem-sucedido e se a chave foi encontrada
 if not defined chave (
