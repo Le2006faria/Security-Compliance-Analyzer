@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Página de Análise de Segurança</title>
-    <link rel="stylesheet" href="analise.css">
+    <link rel="stylesheet" href="analises.css">
 </head>
 
 <body>
@@ -193,40 +193,6 @@
 
         <h1>
             <?php
-            // Comando para verificar o valor da chave de registro Enabled
-            $commandCheckSH = 'reg query "HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings" /v Enabled';
-
-            // Executa o comando e captura a saída
-            exec($commandCheckSH, $outputCheckSH, $return_varCheckSH);
-
-            $key_existsSH = false;
-            $disabledSH = false;
-            foreach ($outputCheckSH as $lineCheckSH) {
-                if (strpos($lineCheckSH, 'Enabled') !== false) {
-                    $key_existsSH = true;
-                    if (strpos($lineCheckSH, '0x0') !== false) {
-                        $disabledSH = true;
-                    }
-                    break;
-                }
-            }
-
-            // Exibe o resultado
-            if ($key_existsSH) {
-                if ($disabledSH) {
-                    echo "O Windows Script Host está desativado.";
-                } else {
-                    echo "O Windows Script Host está ativado.";
-                }
-            } else {
-                echo "A chave de registro Enabled não existe ou está com valor indefinido.";
-            }
-            //teste: foi conferido no caminho: HKLM\SOFTWARE\Microsoft\Windows Script Host, porém a chave estava indefinida.
-            ?>
-        </h1>
-
-        <h1>
-            <?php
             // Função para verificar o valor de uma chave de registro específica
             function checkProtocolStatus($protocolPathSSL_TLS, $valueNameSSL_TLS)
             {
@@ -308,6 +274,40 @@
                 }
             }
             //teste: foi conferido por diversos caminhos, como: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Client->porém as chaves estavam indefinidas.
+            ?>
+        </h1>
+
+        <h1>
+            <?php
+            // Comando para verificar o valor da chave de registro Enabled
+            $commandCheckSH = 'reg query "HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings" /v Enabled';
+
+            // Executa o comando e captura a saída
+            exec($commandCheckSH, $outputCheckSH, $return_varCheckSH);
+
+            $key_existsSH = false;
+            $disabledSH = false;
+            foreach ($outputCheckSH as $lineCheckSH) {
+                if (strpos($lineCheckSH, 'Enabled') !== false) {
+                    $key_existsSH = true;
+                    if (strpos($lineCheckSH, '0x0') !== false) {
+                        $disabledSH = true;
+                    }
+                    break;
+                }
+            }
+
+            // Exibe o resultado
+            if ($key_existsSH) {
+                if ($disabledSH) {
+                    echo "O Windows Script Host está desativado.";
+                } else {
+                    echo "O Windows Script Host está ativado.";
+                }
+            } else {
+                echo "A chave de registro Enabled não existe ou está com valor indefinido.";
+            }
+            //teste: foi conferido no caminho: HKLM\SOFTWARE\Microsoft\Windows Script Host, porém a chave estava indefinida.
             ?>
         </h1>
 
@@ -409,17 +409,17 @@
 
                             // Verifica se o valor é 0x2
                             if ($value === '2') {
-                                echo "O NetBIOS está desativado na interface: $subKey\n";
+                                echo "<p>O NetBIOS está desativado na interface: $subKey</p>";
                             } else {
-                                echo "O NetBIOS não está desativado na interface: $subKey\n";
+                                echo "<p>O NetBIOS está ativado na interface: $subKey</p>";
                             }
                         } else {
-                            echo "A chave NetbiosOptions não existe para a interface: $subKey\n";
+                            echo "<p>A chave NetbiosOptions não existe para a interface: $subKey</p>";
                         }
                     }
                 }
             } else {
-                echo "Erro ao executar o comando inicial para listar interfaces.\n";
+                echo "<p>Erro ao executar o comando inicial para listar interfaces.</p>";
             }
 
             //teste: foi conferido no caminho: HKLM\SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces\Tcpip_{GUID}, porém a chave estava indefinida.
@@ -429,29 +429,30 @@
         <h1>
             <?php
             // Comando para verificar o valor da chave de registro EnableMultiCast
-            $commandCheckMultiCast = 'reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /s /v EnableMultiCast';
+            $commandCheckSMB = 'reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /s /v EnableMultiCast';
 
             // Executa o comando e captura a saída
-            exec($commandCheckMultiCast, $outputCheckMultiCast, $return_varCheckMultiCast);
+            exec($commandCheckSMB, $outputCheckSMB, $return_varCheckSMB);
 
-            $key_existsMultiCast = false;
-            $disabledMultiCast = false;
-            foreach ($outputCheckMultiCast as $lineCheckMultiCast) {
-                if (strpos($lineCheckMultiCast, 'EnableMultiCast') !== false) {
-                    $key_existsMultiCast = true;
-                    if (strpos($lineCheckMultiCast, '0x0') !== false) {
-                        $disabledMultiCast = true;
-                    }
+            $key_existsSMB = false;
+            $disabledSMB = false;
+            foreach ($outputCheckSMB as $lineCheckSMB) {
+                if (strpos($lineCheckSMB, 'False') !== false) {
+                    $key_existsSMB = true;
+                    $disabledSMB = true;
+                    break;
+                } elseif (strpos($lineCheckSMB, 'True') !== false) {
+                    $key_existsSMB = true;
                     break;
                 }
             }
 
             // Exibe o resultado
-            if ($key_existsMultiCast) {
-                if ($disabledMultiCast) {
-                    echo "O LLMNR está desativado.";
+            if ($key_existsSMB) {
+                if ($disabledSMB) {
+                    echo "O protocolo LLMNR está desativado.";
                 } else {
-                    echo "O LLMNR não está desativado.";
+                    echo "O protocolo LLMNR está ativado.";
                 }
             } else {
                 echo "A chave de registro EnableMultiCast não existe ou está com valor indefinido.";

@@ -196,7 +196,7 @@ echo .
 echo Verificando o status do protocolo SMB1...
 
 rem Executar o comando PowerShell e armazenar o resultado
-for /f "delims=" %%A in ('powershell.exe -Command "Get-SmbServerConfiguration | Select-Object -ExpandProperty EnableSMB1Protocol"') do set SMB1Status=%%A
+for /f "tokens=*" %%A in ('powershell -Command "(Get-SmbServerConfiguration | Select-Object -ExpandProperty EnableSMB1Protocol)"') do set SMB1Status=%%A
 
 rem Verificar o valor de EnableSMB1Protocol
 if "%SMB1Status%"=="False" (
@@ -250,7 +250,7 @@ for /f "tokens=*" %%G in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services\Net
             if "%%A"=="0x2" (
                 echo O NetBIOS esta desativado na interface: %%G
             ) else (
-                echo O NetBIOS nao esta desativado na interface: %%G
+                echo O NetBIOS esta ativado na interface: %%G
             )
         )
     ) else (
@@ -262,21 +262,16 @@ echo .
 
 echo Verificando o valor da chave de registro EnableMultiCast...
 
-rem Verificar se a chave de registro existe
-reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /v EnableMultiCast >nul 2>&1
-if %errorlevel%==0 (
-    rem Ler o valor da chave de registro
-    for /f "tokens=3" %%A in ('reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /s /v EnableMultiCast 2^>nul') do (
-        rem Verificar se o LLMNR esta desativado (valor 0x0)
-        if "%%A"=="0x0" (
-            echo O LLMNR esta desativado.
-        ) else (
-            echo O LLMNR nao esta desativado.
-        )
-    )
+rem Executar o comando PowerShell e armazenar o resultado
+for /f "tokens=*" %%A in ('powershell -Command "(Get-SmbServerConfiguration | Select-Object -ExpandProperty EnableSMB1Protocol)"') do set SMB1Status=%%A
+
+rem Verificar o valor de EnableSMB1Protocol
+if "%SMB1Status%"=="False" (
+    echo O protocolo SMB1 esta desativado.
+) else if "%SMB1Status%"=="True" (
+    echo O protocolo SMB1 esta ativado.
 ) else (
-    rem Se a chave de registro nao existir ou estiver indefinida
-    echo A chave de registro EnableMultiCast nao existe ou esta com valor indefinido.
+    echo A chave de registro EnableSMB1Protocol nao existe ou esta com valor indefinido.
 )
 
 echo .
@@ -350,5 +345,3 @@ echo .
 
 endlocal
 pause
-
-//chaves que estão extras no servidor remoto: UseLogonCredential; RunAsPPL

@@ -87,3 +87,8 @@ h1:hover {
 .container .item:hover, .container h1:hover {
     background-color: #008bb5;
 }
+
+.item p {
+    margin: 5px 0; /* Define um espaçamento entre as linhas */
+    overflow-wrap: break-word; /* Quebra o texto em palavras longas */
+}
