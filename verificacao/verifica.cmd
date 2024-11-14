@@ -367,4 +367,3 @@ if "%RequireSecuritySignatureStatus%"=="ativado" if "%EncryptDataStatus%"=="ativ
 echo .
 
 endlocal
-pause
