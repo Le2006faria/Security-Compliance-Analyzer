@@ -246,18 +246,6 @@ if %errorlevel% equ 0 (
 echo.
 echo =====================================================
 
-:: Verificar e corrigir arquivos do sistema
-echo Verificando arquivos do sistema com o sfc /scannow...
-sfc /scannow
-if %errorlevel% equ 0 (
-    echo A verificacao do sfc foi concluida com sucesso.
-) else (
-    echo A verificacao do sfc encontrou problemas.
-)
-
-echo.
-echo =====================================================
-
 :: Verificar e reparar a imagem do sistema
 echo Verificando e reparando a imagem do sistema com o DISM...
 DISM /Online /Cleanup-Image /RestoreHealth
