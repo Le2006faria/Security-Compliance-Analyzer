@@ -8,6 +8,16 @@ echo =====================================================
 
 echo.
 
+:: Verifica se o script esta sendo executado com privilegios de administrador
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Este script precisa ser executado como administrador.
+    pause
+    exit /b
+)
+
+echo.
+echo =====================================================
 :: Configurar expiracao de senha global para 30 dias
 echo Configurando expiracao de senha para 30 dias...
 net accounts /maxpwage:30
@@ -15,20 +25,6 @@ if %errorlevel% equ 0 (
     echo Expiracao de senha configurada com sucesso.
 ) else (
     echo Falha ao configurar expiracao de senha.
-)
-
-echo.
-:: Forcar alteracao de senha no próximo login para todos os usuarios
-echo Configurando forca de alteracao de senha para todos os usuarios...
-for /f "skip=4 tokens=1 delims= " %%u in ('net user') do (
-    if "%%u" neq "" (
-        net user %%u /logonpasswordchg:yes >nul 2>&1
-        if %errorlevel% equ 0 (
-            echo Alteracao de senha forcada para o usuario %%u.
-        ) else (
-            echo Falha ao forcar alteracao de senha para o usuario %%u.
-        )
-    )
 )
 
 echo.
@@ -149,10 +145,10 @@ for /f "tokens=*" %%i in ('reg query "HKLM\SOFTWARE\WOW6432Node\Microsoft\Window
 )
 
 echo.
-:: Perguntar ao usuário qual programa deseja remover
+:: Perguntar ao usuario qual programa deseja remover
 set /p program="Digite o nome do programa que deseja remover (ou aperte ENTER para pular): "
 
-:: Se o nome do programa não for vazio
+:: Se o nome do programa nao for vazio
 if not "%program%"=="" (
     echo Tentando remover o programa: %program%
 
@@ -166,10 +162,10 @@ if not "%program%"=="" (
         set uninstall_cmd=%%j
     )
 
-    :: Verifica se a string de desinstalação foi encontrada
+    :: Verifica se a string de desinstalacao foi encontrada
     if not "!uninstall_cmd!"=="" (
         echo Comando para desinstalar: !uninstall_cmd!
-        :: Executa a desinstalação
+        :: Executa a desinstalacao
         call "!uninstall_cmd!"
         if %errorlevel% equ 0 (
             echo Programa removido com sucesso.
@@ -177,7 +173,7 @@ if not "%program%"=="" (
             echo Falha ao remover o programa.
         )
     ) else (
-        echo Não foi possível encontrar o comando de desinstalação.
+        echo Nao foi possivel encontrar o comando de desinstalacao.
     )
 ) else (
     echo Nenhum programa foi removido.
@@ -270,11 +266,12 @@ if %errorlevel% equ 0 (
 echo.
 echo =====================================================
 
+:: Listar grupos locais
 echo Listando Grupos Locais...
 net localgroup
 echo.
 
-:: Solicita ao usuario para escolher um grupo local para listar membros e permissoes
+:: Solicita ao usuario para escolher um grupo local
 set /p grupo="Digite o nome do grupo local para listar os membros: "
 echo.
 
@@ -283,20 +280,37 @@ echo Membros do grupo %grupo%:
 net localgroup "%grupo%"
 echo.
 
-:: Pergunta se o usuario deseja excluir um membro ou remover permissoes
-set /p acao="Deseja excluir um membro? (S/N): "
-if /i "%acao%"=="S" (
-    set /p membro="Digite o nome do membro a ser excluido ou ter permissao removida: "
+:: Pergunta se o usuario deseja realizar alguma acao
+echo Escolha uma opcao:
+echo [1] Excluir um membro do grupo (remover do grupo, mas manter no sistema).
+echo [2] Excluir um usuario completamente do sistema.
+echo [3] Sair sem fazer alteracoes.
+set /p opcao="Digite o numero da opcao desejada: "
+
+if "%opcao%"=="1" (
+    :: Remover membro do grupo
+    set /p membro="Digite o nome do membro a ser removido do grupo: "
     echo.
-    :: Excluir membro do grupo
     net localgroup "%grupo%" "%membro%" /delete
     if %errorlevel% equ 0 (
         echo Membro %membro% removido com sucesso do grupo %grupo%.
     ) else (
-        echo Erro ao remover o membro %membro%.
+        echo Erro ao remover o membro %membro% do grupo %grupo%.
     )
+) else if "%opcao%"=="2" (
+    :: Excluir usuario completamente do sistema
+    set /p usuario="Digite o nome do usuario a ser excluido: "
+    echo.
+    net user "%usuario%" /delete
+    if %errorlevel% equ 0 (
+        echo Usuario %usuario% excluido com sucesso do sistema.
+    ) else (
+        echo Erro ao excluir o usuario %usuario%.
+    )
+) else if "%opcao%"=="3" (
+    echo Nenhuma alteracao foi feita. Saindo...
 ) else (
-    echo Nenhuma alteracao foi feita.
+    echo Opcao invalida. Saindo...
 )
 
 echo.
@@ -306,32 +320,97 @@ echo Verificando o status do servico Windows Defender...
 sc query windefend >nul 2>&1
 if %errorlevel% equ 0 (
     echo O servico Windows Defender esta ativado.
+    
+    :: Pergunta se o usuario deseja desativar o Windows Defender
+    set /p action="Deseja desativar o Windows Defender? (S/N): "
+    if /i "%action%"=="S" (
+        echo Desativando o servico Windows Defender...
+        sc stop windefend
+        sc config windefend start= disabled
+        echo Windows Defender desativado com sucesso.
+    ) else (
+        echo Nenhuma alteracao foi feita.
+    )
 ) else (
     echo O servico Windows Defender NAO esta ativado ou nao foi encontrado.
+    
+    :: Pergunta se o usuario deseja ativar o Windows Defender
+    set /p action="Deseja ativar o Windows Defender? (S/N): "
+    if /i "%action%"=="S" (
+        echo Ativando o servico Windows Defender...
+        sc config windefend start= auto
+        sc start windefend
+        echo Windows Defender ativado com sucesso.
+    ) else (
+        echo Nenhuma alteracao foi feita.
+    )
 )
 
 echo.
 echo ============================================
 
-:: Verificar se o Windows Update esta ativado
 echo Verificando o status do servico Windows Update...
+
 sc query wuauserv >nul 2>&1
 if %errorlevel% equ 0 (
     echo O servico Windows Update esta ativado.
+    
+    :: Pergunta se o usuario deseja desativar o Windows Update
+    set /p action="Deseja desativar o Windows Update? (S/N): "
+    if /i "%action%"=="S" (
+        echo Desativando o servico Windows Update...
+        sc stop wuauserv
+        sc config wuauserv start= disabled
+        echo Windows Update desativado com sucesso.
+    ) else (
+        echo Nenhuma alteracao foi feita.
+    )
 ) else (
     echo O servico Windows Update NAO esta ativado ou nao foi encontrado.
+    
+    :: Pergunta se o usuario deseja ativar o Windows Update
+    set /p action="Deseja ativar o Windows Update? (S/N): "
+    if /i "%action%"=="S" (
+        echo Ativando o servico Windows Update...
+        sc config wuauserv start= auto
+        sc start wuauserv
+        echo Windows Update ativado com sucesso.
+    ) else (
+        echo Nenhuma alteracao foi feita.
+    )
 )
 
 echo.
 echo ============================================
 
-:: Verificar configuracao do Windows Defender Antivirus
 echo Verificando configuracao do Windows Defender Antivirus...
+
+:: Verificar a configuracao do Windows Defender
 reg query "HKLM\SOFTWARE\Microsoft\Windows Defender" /v "DisableAntiSpyware" >nul 2>&1
 if %errorlevel% equ 0 (
     echo O Windows Defender Antivirus esta habilitado.
+
+    :: Perguntar ao usuario se deseja desabilitar o Windows Defender
+    set /p action="Deseja desabilitar o Windows Defender Antivirus? (S/N): "
+    if /i "%action%"=="S" (
+        echo Desabilitando o Windows Defender Antivirus...
+        reg add "HKLM\SOFTWARE\Microsoft\Windows Defender" /v "DisableAntiSpyware" /t REG_DWORD /d 1 /f
+        echo Windows Defender Antivirus desabilitado com sucesso.
+    ) else (
+        echo Nenhuma alteracao foi feita.
+    )
 ) else (
     echo O Windows Defender Antivirus esta desabilitado ou nao foi encontrado.
+
+    :: Perguntar ao usuario se deseja habilitar o Windows Defender
+    set /p action="Deseja habilitar o Windows Defender Antivirus? (S/N): "
+    if /i "%action%"=="S" (
+        echo Habilitando o Windows Defender Antivirus...
+        reg add "HKLM\SOFTWARE\Microsoft\Windows Defender" /v "DisableAntiSpyware" /t REG_DWORD /d 0 /f
+        echo Windows Defender Antivirus habilitado com sucesso.
+    ) else (
+        echo Nenhuma alteracao foi feita.
+    )
 )
 
 echo.
@@ -341,29 +420,76 @@ echo ============================================
 echo === Conexoes de Rede Ativas ===
 netstat -an
 echo.
-echo Deseja encerrar alguma conexao especifica? (S/N)
+echo Deseja desativar alguma conexao especifica? (S/N)
 set /p resposta=
 
 if /i "%resposta%"=="S" (
-    echo Digite o PID ou a porta da conexao que deseja encerrar:
+    echo Digite o PID ou a porta da conexao que deseja desativar:
     set /p pid_port=
-    echo Encerrando conexao com PID ou porta: %pid_port%
+    echo Desativando conexao com PID ou porta: %pid_port%
     for /f "tokens=5" %%a in ('netstat -ano ^| find "%pid_port%"') do taskkill /PID %%a /F
     if %errorlevel% equ 0 (
-        echo Conexao encerrada com sucesso!
+        echo Conexao desativada com sucesso!
     ) else (
-        echo Falha ao encerrar a conexao. Verifique se o PID ou porta esta correto.
+        echo Falha ao desativar a conexao. Verifique se o PID ou porta esta correto.
     )
 ) else (
-    echo Nenhuma conexao foi encerrada.
+    echo Nenhuma conexao foi desativada.
 )
 
 echo.
 echo ============================================
-:: Verificar configuracoes de TLS e HTTPS
-echo === Configuracoes de TLS e HTTPS ===
-reg query "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols"
-netsh http show sslcert
+:: Exibe as configuracoes de protocolos TLS/SSL
+echo === Configuracoes atuais de TLS e SSL ===
+echo.
+
+:: Verifica as configuracoes de TLS no registro
+reg query "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols" /s
+echo.
+
+:: Pergunta ao usuario se deseja modificar as configuracoes
+set /p "action=Voce deseja modificar as configuracoes de TLS/SSL? (S/N): "
+if /i "%action%"=="S" (
+    echo Escolha uma opcao para alterar a configuracao de TLS/SSL:
+    echo 1. Habilitar/Desabilitar TLS 1.2
+    echo 2. Habilitar/Desabilitar TLS 1.1
+    echo 3. Habilitar/Desabilitar TLS 1.0
+    echo 4. Habilitar/Desabilitar SSL 3.0
+    echo 5. Habilitar/Desabilitar SSL 2.0
+    echo 6. Habilitar TLS 1.3 (se disponivel)
+    set /p "choice=Escolha o número da opcao (1-6): "
+    
+    if "%choice%"=="1" (
+        set /p "enable=Habilitar (1) ou Desabilitar (0) TLS 1.2? "
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server" /v "Enabled" /t REG_DWORD /d %enable% /f
+        echo Configuracao de TLS 1.2 alterada.
+    ) else if "%choice%"=="2" (
+        set /p "enable=Habilitar (1) ou Desabilitar (0) TLS 1.1? "
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server" /v "Enabled" /t REG_DWORD /d %enable% /f
+        echo Configuracao de TLS 1.1 alterada.
+    ) else if "%choice%"=="3" (
+        set /p "enable=Habilitar (1) ou Desabilitar (0) TLS 1.0? "
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server" /v "Enabled" /t REG_DWORD /d %enable% /f
+        echo Configuracao de TLS 1.0 alterada.
+    ) else if "%choice%"=="4" (
+        set /p "enable=Habilitar (1) ou Desabilitar (0) SSL 3.0? "
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Server" /v "Enabled" /t REG_DWORD /d %enable% /f
+        echo Configuracao de SSL 3.0 alterada.
+    ) else if "%choice%"=="5" (
+        set /p "enable=Habilitar (1) ou Desabilitar (0) SSL 2.0? "
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Server" /v "Enabled" /t REG_DWORD /d %enable% /f
+        echo Configuracao de SSL 2.0 alterada.
+    ) else if "%choice%"=="6" (
+        echo TLS 1.3 esta disponivel apenas em versoes mais recentes do Windows. Se o seu Windows nao for compativel, essa opcao pode nao funcionar.
+        set /p "enable=Habilitar (1) ou Desabilitar (0) TLS 1.3? "
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.3\Server" /v "Enabled" /t REG_DWORD /d %enable% /f
+        echo Configuracao de TLS 1.3 alterada.
+    ) else (
+        echo Opcao invalida.
+    )
+) else (
+    echo Nenhuma alteracao realizada.
+)
 
 echo.
 echo ============================================
@@ -405,7 +531,95 @@ echo 0x1: Significa que o Controle de Conta de Usuario (UAC) esta ativado, porem
 echo se 0x0: Significa que o Controle de Conta de Usuario (UAC) esta desativado.
 
 echo.
+echo ======================================================
+echo Configurando o log de eventos de seguranca...
 
+:: Define o tamanho maximo do log para 10 MB
+wevtutil sl Security /ms:10485760
+
+:: Ativa o arquivamento automatico
+wevtutil sl Security /ca:true
+
+
+echo .
+echo ===========================================
+echo Configurando o Windows Update...
+
+:: Define o servico para iniciar automaticamente
+sc config wuauserv start= auto
+if %errorlevel% equ 0 (
+    echo O servico Windows Update foi configurado para iniciar automaticamente.
+) else (
+    echo Falha ao configurar o servico para iniciar automaticamente.
+)
+
+:: Inicia o servico
+net start wuauserv
+if %errorlevel% equ 0 (
+    echo O servico Windows Update foi iniciado com sucesso.
+) else (
+    echo Falha ao iniciar o servico Windows Update. Verifique as configuracoes ou permissoes.
+)
+
+echo .
+echo ===========================================
+
+:: Verificar se a unidade D: esta disponivel
+if not exist D:\ (
+    echo A unidade D: nao foi encontrada. O backup nao pode ser realizado.
+    pause
+    exit /b
+)
+
+:: Iniciar o backup
+echo Iniciando backup de C: para D:\Backup...
+wbadmin start backup -backupTarget:D:\Backup -include:C: -allCritical -quiet
+
+:: Verificar o resultado do comando
+if %errorlevel% equ 0 (
+    echo Backup realizado com sucesso!
+) else (
+    echo Ocorreu um erro durante o backup.
+)
+
+echo .
+echo ===========================================
+
+:: Desativa a conta de convidado (Guest)
+echo Desativando a conta Guest...
+net user guest /active:no
+if %errorlevel% equ 0 (
+    echo Conta Guest desativada com sucesso.
+) else (
+    echo Falha ao desativar a conta Guest. Verifique as permissoes do usuario atual.
+)
+
+echo.
+
+:: Desativa compartilhamentos administrativos automaticos
+echo Desativando compartilhamentos administrativos automaticos...
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" /v "AutoShareWks" /t REG_DWORD /d 0 /f
+if %errorlevel% equ 0 (
+    echo Compartilhamentos administrativos desativados com sucesso.
+) else (
+    echo Falha ao desativar compartilhamentos administrativos. Verifique as permissoes do usuario atual.
+)
+
+echo.
+echo ===========================================
+echo Aplicando atualizacoes do Windows...
+
+echo Executando o comando PowerShell para instalar e aplicar atualizacoes...
+echo Este processo pode reiniciar o computador se necessario. Deseja continuar? (S/N)
+set /p choice=
+if /i not "%choice%"=="S" (
+    echo Operacao cancelada pelo usuario.
+    exit /b
+)
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Install-Module PSWindowsUpdate -Force; Import-Module PSWindowsUpdate; Get-WindowsUpdate -Install -AcceptAll -AutoReboot"
+
+echo.
 echo =====================================================
 echo Configuracoes de seguranca aplicadas.
 echo =====================================================
