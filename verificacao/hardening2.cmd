@@ -6,8 +6,6 @@ echo =====================================================
 echo Script para Configuracoes de Seguranca - Hardening
 echo =====================================================
 
-echo.
-
 :: Verifica se o script esta sendo executado com privilegios de administrador
 net session >nul 2>&1
 if %errorlevel% neq 0 (
@@ -17,7 +15,7 @@ if %errorlevel% neq 0 (
 )
 
 echo.
-echo =====================================================
+
 :: Configurar expiracao de senha global para 30 dias
 echo Configurando expiracao de senha para 30 dias...
 net accounts /maxpwage:30
@@ -29,7 +27,6 @@ if %errorlevel% equ 0 (
 
 echo.
 echo =====================================================
-
 echo Iniciando configuracoes de seguranca...
 
 :: Renomear contas chamadas "Administrator" ou "Administrador"
@@ -50,7 +47,6 @@ if %errorlevel% neq 0 (
 
 echo.
 echo =====================================================
-
 :: Exigir senhas complexas
 echo Configurando exigencia de senhas complexas...
 secedit /export /areas SECURITYPOLICY /cfg config.cfg >nul 2>&1
@@ -77,7 +73,6 @@ if exist config.cfg (
 
 echo.
 echo =====================================================
-
 :: Habilitar auditoria para alteracoes de contas
 echo Configurando auditoria para alteracoes de contas...
 
@@ -95,7 +90,6 @@ if %errorlevel% equ 0 (
 
 echo.
 echo =====================================================
-
 :: Configurar bloqueio de contas apos tentativas de login falhadas
 echo Configurando bloqueio de contas apos tentativas de login falhadas...
 net accounts /lockoutthreshold:3 /lockoutduration:30 /lockoutwindow:30 >nul 2>&1
@@ -107,7 +101,6 @@ if %errorlevel% equ 0 (
 
 echo.
 echo ================================================
-
 :: Listar aplicativos instalados
 echo.
 echo Listando aplicativos instalados...
@@ -230,7 +223,6 @@ if not "%service%"=="" (
 :: Limpeza de disco
 echo.
 echo =====================================================
-
 echo Limpando a memoria do PC...
 cleanmgr /sagerun:1
 if %errorlevel% equ 0 (
@@ -241,7 +233,6 @@ if %errorlevel% equ 0 (
 
 echo.
 echo =====================================================
-
 :: Listar grupos locais
 echo Listando Grupos Locais...
 net localgroup
@@ -291,40 +282,35 @@ if "%opcao%"=="1" (
 
 echo.
 echo ============================================
-
+:: Verificando o status do serviço Windows Defender
 echo Verificando o status do servico Windows Defender...
-sc query windefend >nul 2>&1
+sc qc WinDefend > nul 2>&1
 if %errorlevel% equ 0 (
     echo O servico Windows Defender esta ativado.
-    
-    :: Pergunta se o usuario deseja desativar o Windows Defender
-    set /p action="Deseja desativar o Windows Defender? (S/N): "
-    if /i "%action%"=="S" (
-        echo Desativando o servico Windows Defender...
-        sc stop windefend
-        sc config windefend start= disabled
+) else (
+    echo O servico Windows Defender nao esta instalado ou ativado.
+)
+
+:: Pergunta se o usuário deseja desativar o Windows Defender
+set /p "response=Deseja desativar o Windows Defender? (S/N): "
+if /i "%response%"=="S" (
+    echo Desativando o servico Windows Defender...
+    :: Tentando desativar o Windows Defender
+    sc stop WinDefend >nul 2>&1
+    sc config WinDefend start= disabled >nul 2>&1
+    if %errorlevel% equ 0 (
         echo Windows Defender desativado com sucesso.
     ) else (
-        echo Nenhuma alteracao foi feita.
+        echo Acesso negado ou falha ao desativar o Windows Defender.
     )
+) else if /i "%response%"=="N" (
+    echo Nenhuma alteracao foi feita.
 ) else (
-    echo O servico Windows Defender NAO esta ativado ou nao foi encontrado.
-    
-    :: Pergunta se o usuario deseja ativar o Windows Defender
-    set /p action="Deseja ativar o Windows Defender? (S/N): "
-    if /i "%action%"=="S" (
-        echo Ativando o servico Windows Defender...
-        sc config windefend start= auto
-        sc start windefend
-        echo Windows Defender ativado com sucesso.
-    ) else (
-        echo Nenhuma alteracao foi feita.
-    )
+    echo Opcao invalida. Saindo...
 )
 
 echo.
 echo ============================================
-
 echo Verificando o status do servico Windows Update...
 
 sc query wuauserv >nul 2>&1
@@ -358,7 +344,6 @@ if %errorlevel% equ 0 (
 
 echo.
 echo ============================================
-
 echo Verificando configuracao do Windows Defender Antivirus...
 
 :: Verificar a configuracao do Windows Defender
@@ -391,7 +376,6 @@ if %errorlevel% equ 0 (
 
 echo.
 echo ============================================
-
 :: Exibir conexoes de rede ativas
 echo === Conexoes de Rede Ativas ===
 netstat -an
@@ -425,47 +409,66 @@ echo.
 
 :: Pergunta ao usuario se deseja modificar as configuracoes
 set /p "action=Voce deseja modificar as configuracoes de TLS/SSL? (S/N): "
-if /i "%action%"=="S" (
-    echo Escolha uma opcao para alterar a configuracao de TLS/SSL:
-    echo 1. Habilitar/Desabilitar TLS 1.2
-    echo 2. Habilitar/Desabilitar TLS 1.1
-    echo 3. Habilitar/Desabilitar TLS 1.0
-    echo 4. Habilitar/Desabilitar SSL 3.0
-    echo 5. Habilitar/Desabilitar SSL 2.0
-    echo 6. Habilitar TLS 1.3 (se disponivel)
-    set /p "choice=Escolha o número da opcao (1-6): "
-    
-    if "%choice%"=="1" (
-        set /p "enable=Habilitar (1) ou Desabilitar (0) TLS 1.2? "
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server" /v "Enabled" /t REG_DWORD /d %enable% /f
-        echo Configuracao de TLS 1.2 alterada.
-    ) else if "%choice%"=="2" (
-        set /p "enable=Habilitar (1) ou Desabilitar (0) TLS 1.1? "
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server" /v "Enabled" /t REG_DWORD /d %enable% /f
-        echo Configuracao de TLS 1.1 alterada.
-    ) else if "%choice%"=="3" (
-        set /p "enable=Habilitar (1) ou Desabilitar (0) TLS 1.0? "
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server" /v "Enabled" /t REG_DWORD /d %enable% /f
-        echo Configuracao de TLS 1.0 alterada.
-    ) else if "%choice%"=="4" (
-        set /p "enable=Habilitar (1) ou Desabilitar (0) SSL 3.0? "
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Server" /v "Enabled" /t REG_DWORD /d %enable% /f
-        echo Configuracao de SSL 3.0 alterada.
-    ) else if "%choice%"=="5" (
-        set /p "enable=Habilitar (1) ou Desabilitar (0) SSL 2.0? "
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Server" /v "Enabled" /t REG_DWORD /d %enable% /f
-        echo Configuracao de SSL 2.0 alterada.
-    ) else if "%choice%"=="6" (
-        echo TLS 1.3 esta disponivel apenas em versoes mais recentes do Windows. Se o seu Windows nao for compativel, essa opcao pode nao funcionar.
-        set /p "enable=Habilitar (1) ou Desabilitar (0) TLS 1.3? "
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.3\Server" /v "Enabled" /t REG_DWORD /d %enable% /f
-        echo Configuracao de TLS 1.3 alterada.
-    ) else (
-        echo Opcao invalida.
-    )
-) else (
-    echo Nenhuma alteracao realizada.
+
+:: Verifica a resposta do usuario
+if /i "%action%"=="N" (
+    echo Saindo sem fazer alteracoes.
+    goto CONTINUE
+) else if /i not "%action%"=="S" (
+    echo Opcao invalida. Use apenas S ou N.
+    goto CONTINUE
 )
+
+:: Continua apenas se o usuario escolher "S"
+echo Escolha uma opcao para alterar a configuracao de TLS/SSL:
+echo 1. Habilitar/Desabilitar TLS 1.2
+echo 2. Habilitar/Desabilitar TLS 1.1
+echo 3. Habilitar/Desabilitar TLS 1.0
+echo 4. Habilitar/Desabilitar SSL 3.0
+echo 5. Habilitar/Desabilitar SSL 2.0
+echo 6. Habilitar TLS 1.3 (se disponivel)
+set /p "choice=Escolha o numero da opcao (1-6): "
+
+:: Valida a opcao do usuario
+if "%choice%"=="1" (
+    set "protocol=TLS 1.2"
+) else if "%choice%"=="2" (
+    set "protocol=TLS 1.1"
+) else if "%choice%"=="3" (
+    set "protocol=TLS 1.0"
+) else if "%choice%"=="4" (
+    set "protocol=SSL 3.0"
+) else if "%choice%"=="5" (
+    set "protocol=SSL 2.0"
+) else if "%choice%"=="6" (
+    echo TLS 1.3 esta disponivel apenas em versoes mais recentes do Windows. Se o seu Windows nao for compativel, essa opcao pode nao funcionar.
+    set "protocol=TLS 1.3"
+) else (
+    echo Opcao invalida. Escolha um numero de 1 a 6.
+    goto CONTINUE
+)
+
+set /p "enable=Habilitar (1) ou Desabilitar (0) %protocol%? "
+
+:: Verifica se o valor inserido é válido
+if "%enable%"=="1" (
+    set "status=Habilitado"
+) else if "%enable%"=="0" (
+    set "status=Desabilitado"
+) else (
+    echo Opcao invalida. Use apenas 1 ou 0.
+    goto CONTINUE
+)
+
+:: Altera a configuracao no registro
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\%protocol%\Server" /v "Enabled" /t REG_DWORD /d %enable% /f
+if %errorlevel% equ 0 (
+    echo Configuracao de %protocol% foi alterada para: %status%.
+) else (
+    echo Ocorreu um erro ao alterar a configuracao de %protocol%.
+)
+
+:CONTINUE
 
 echo.
 echo ============================================
@@ -508,70 +511,47 @@ echo se 0x0: Significa que o Controle de Conta de Usuario (UAC) esta desativado.
 
 echo.
 echo ======================================================
-echo Configurando o log de eventos de seguranca...
-
-:: Define o tamanho maximo do log para 10 MB
-wevtutil sl Security /ms:10485760
-
-:: Ativa o arquivamento automatico
-wevtutil sl Security /ca:true
-
-
-echo .
-echo ===========================================
-echo Configurando o Windows Update...
-
-:: Define o servico para iniciar automaticamente
-sc config wuauserv start= auto
-if %errorlevel% equ 0 (
-    echo O servico Windows Update foi configurado para iniciar automaticamente.
+echo Verificando configuracoes do log de eventos de seguranca...
+:: Verifica se o tamanho maximo do log foi configurado corretamente (0xa00000 = 10 MB)
+reg query "HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Security" /v MaxSize | find "0xa00000" >nul
+if %errorlevel%==0 (
+    echo Tamanho maximo do log configurado corretamente para 10 MB.
 ) else (
-    echo Falha ao configurar o servico para iniciar automaticamente.
+    echo ERRO: O tamanho maximo do log nao foi configurado corretamente.
 )
 
-:: Inicia o servico
-net start wuauserv
-if %errorlevel% equ 0 (
-    echo O servico Windows Update foi iniciado com sucesso.
+:: Verifica se o arquivamento automatico foi ativado (AutoBackupLogFiles = 1)
+reg query "HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Security" /v AutoBackupLogFiles | find "0x1" >nul
+if %errorlevel%==0 (
+    echo Arquivamento automatico esta ativado.
 ) else (
-    echo Falha ao iniciar o servico Windows Update. Verifique as configuracoes ou permissoes.
+    echo ERRO: O arquivamento automatico nao foi configurado corretamente.
 )
 
 echo .
 echo ===========================================
-
+echo Fazendo backup do volume C: e dos dados criticos do sistema
 :: Verificar se a unidade D: esta disponivel
 if not exist D:\ (
     echo A unidade D: nao foi encontrada. O backup nao pode ser realizado.
-    pause
-    exit /b
-)
-
-:: Iniciar o backup
-echo Iniciando backup de C: para D:\Backup...
-wbadmin start backup -backupTarget:D:\Backup -include:C: -allCritical -quiet
-
-:: Verificar o resultado do comando
-if %errorlevel% equ 0 (
-    echo Backup realizado com sucesso!
+    set backup_status=erro
 ) else (
-    echo Ocorreu um erro durante o backup.
-)
+    :: Iniciar o backup
+    echo Iniciando backup de C: para D:\Backup...
+    wbadmin start backup -backupTarget:D:\Backup -include:C: -allCritical -quiet
 
-echo .
-echo ===========================================
-
-:: Desativa a conta de convidado (Guest)
-echo Desativando a conta Guest...
-net user guest /active:no
-if %errorlevel% equ 0 (
-    echo Conta Guest desativada com sucesso.
-) else (
-    echo Falha ao desativar a conta Guest. Verifique as permissoes do usuario atual.
+    :: Verificar o resultado do comando
+    if %errorlevel% equ 0 (
+        echo Backup realizado com sucesso!
+        set backup_status=sucesso
+    ) else (
+        echo Ocorreu um erro durante o backup.
+        set backup_status=erro
+    )
 )
 
 echo.
-
+echo ===========================================
 :: Desativa compartilhamentos administrativos automaticos
 echo Desativando compartilhamentos administrativos automaticos...
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" /v "AutoShareWks" /t REG_DWORD /d 0 /f
