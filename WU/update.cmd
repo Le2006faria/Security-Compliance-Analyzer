@@ -35,21 +35,21 @@ if not exist C:\temp (
 REM Executa as consultas no PowerShell e exporta para CSV
 
 REM Busca de HotFixes
-powershell -Command "Get-HotFix | Where-Object {($_.InstalledOn -ge [datetime]::Parse('%startDate%')) -and ($_.InstalledOn -le [datetime]::Parse('%endDate%'))} | Select-Object @{Name='Nome';Expression={$_.Description}}, @{Name='Versão';Expression={$_.HotFixID}}, @{Name='Data';Expression={$_.InstalledOn}}, @{Name='Situação';Expression={if ($_.InstalledOn) {'Concluída'} elseif ($_.Status -eq 'Pending') {'Pendente'} elseif ($_.Status -eq 'InProgress') {'Em Progresso'} elseif ($_.Status -eq 'Failed') {'Falhou'} elseif ($_.Status -eq 'Canceled') {'Cancelada'} elseif ($_.Status -eq 'RebootRequired') {'Aguardando Reinicialização'} else {'Atrasada'}}} | Export-Csv -Path C:\temp\hotfix_updates.csv -NoTypeInformation -Encoding UTF8"
+powershell -Command "$machineName = (hostname); Get-HotFix | Where-Object {($_.InstalledOn -ge [datetime]::Parse('%startDate%')) -and ($_.InstalledOn -le [datetime]::Parse('%endDate%')) -and ($_.Caption -notlike '*microsoft.com*')} | Sort-Object InstalledOn | Select-Object @{Name='Data';Expression={$_.InstalledOn.ToString('yyyy-MM-dd HH:mm:ss')}}, @{Name='Máquina';Expression={$machineName}}, @{Name='Nome';Expression={$_.Description}}, @{Name='Versão';Expression={$_.HotFixID}}, @{Name='Situação';Expression={if ($_.InstalledOn) {'Concluída'} elseif ($_.Status -eq 'Pending') {'Pendente'} elseif ($_.Status -eq 'InProgress') {'Em Progresso'} elseif ($_.Status -eq 'Failed') {'Falhou'} elseif ($_.Status -eq 'Canceled') {'Cancelada'} elseif ($_.Status -eq 'RebootRequired') {'Aguardando Reinicialização'} else {'Atrasada'}}} | Export-Csv -Path C:\temp\hotfix_updates.csv -NoTypeInformation -Encoding UTF8"
 
 REM Busca de Drivers
-powershell -Command "Get-WmiObject Win32_PnPSignedDriver | Where-Object { $_.DriverDate -ge '%startDate%' -and $_.DriverDate -le '%endDate%' } | Select-Object @{Name='Nome';Expression={$_.DeviceName}}, @{Name='Versão';Expression={$_.DriverVersion}}, @{Name='Data';Expression={([Management.ManagementDateTimeConverter]::ToDateTime($_.DriverDate)).ToString('yyyy-MM-dd HH:mm:ss')}}, @{Name='Situação';Expression={if ($_.DriverDate) {'Concluída'} elseif ($_.Status -eq 'Pending') {'Pendente'} elseif ($_.Status -eq 'InProgress') {'Em Progresso'} elseif ($_.Status -eq 'Failed') {'Falhou'} elseif ($_.Status -eq 'Canceled') {'Cancelada'} elseif ($_.Status -eq 'RebootRequired') {'Aguardando Reinicialização'} else {'Atrasada'}}} | Export-Csv -Path C:\temp\driver_updates.csv -NoTypeInformation -Encoding UTF8"
+powershell -Command "$machineName = (hostname); Get-WmiObject Win32_PnPSignedDriver | Where-Object { $_.DriverDate -ge '%startDate%' -and $_.DriverDate -le '%endDate%' } | Sort-Object DriverDate | Select-Object @{Name='Data';Expression={([Management.ManagementDateTimeConverter]::ToDateTime($_.DriverDate)).ToString('yyyy-MM-dd HH:mm:ss')}}, @{Name='Máquina';Expression={$machineName}}, @{Name='Nome';Expression={$_.DeviceName}}, @{Name='Versão';Expression={$_.DriverVersion}}, @{Name='Situação';Expression={if ($_.DriverDate) {'Concluída'} elseif ($_.Status -eq 'Pending') {'Pendente'} elseif ($_.Status -eq 'InProgress') {'Em Progresso'} elseif ($_.Status -eq 'Failed') {'Falhou'} elseif ($_.Status -eq 'Canceled') {'Cancelada'} elseif ($_.Status -eq 'RebootRequired') {'Aguardando Reinicialização'} else {'Atrasada'}}} | Export-Csv -Path C:\temp\driver_updates.csv -NoTypeInformation -Encoding UTF8"
 
 REM Busca de Logs do Windows Defender (Antivírus)
-powershell -Command "Get-WinEvent -LogName 'Microsoft-Windows-Windows Defender/Operational' | Where-Object {($_.Id -eq 2000 -or $_.Id -eq 2001) -and ($_.TimeCreated -ge [datetime]::Parse('%startDate%') -and $_.TimeCreated -le [datetime]::Parse('%endDate%'))} | Select-Object @{Name='Nome';Expression={'Windows Defender'}}, @{Name='Versão';Expression={$_.'Id'}}, @{Name='Data';Expression={$_.TimeCreated}}, @{Name='Situação';Expression={if ($_.Id -eq 2000) {'Concluída'} elseif ($_.Id -eq 2001) {'Incompleta'} elseif ($_.Status -eq 'Pending') {'Pendente'} elseif ($_.Status -eq 'InProgress') {'Em Progresso'} elseif ($_.Status -eq 'Failed') {'Falhou'} elseif ($_.Status -eq 'Canceled') {'Cancelada'} elseif ($_.Status -eq 'RebootRequired') {'Aguardando Reinicialização'} else {'Atrasada'}}} | Export-Csv -Path C:\temp\defender_updates.csv -NoTypeInformation -Encoding UTF8"
+powershell -Command "$machineName = (hostname); Get-WinEvent -LogName 'Microsoft-Windows-Windows Defender/Operational' | Where-Object {($_.Id -eq 2000 -or $_.Id -eq 2001) -and ($_.TimeCreated -ge [datetime]::Parse('%startDate%') -and $_.TimeCreated -le [datetime]::Parse('%endDate%'))} | Sort-Object TimeCreated | Select-Object @{Name='Data';Expression={$_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss')}}, @{Name='Máquina';Expression={$machineName}}, @{Name='Nome';Expression={'Windows Defender'}}, @{Name='Versão';Expression={$_.'Id'}}, @{Name='Situação';Expression={if ($_.Id -eq 2000) {'Concluída'} elseif ($_.Id -eq 2001) {'Incompleta'} elseif ($_.Status -eq 'Pending') {'Pendente'} elseif ($_.Status -eq 'InProgress') {'Em Progresso'} elseif ($_.Status -eq 'Failed') {'Falhou'} elseif ($_.Status -eq 'Canceled') {'Cancelada'} elseif ($_.Status -eq 'RebootRequired') {'Aguardando Reinicialização'} else {'Atrasada'}}} | Export-Csv -Path C:\temp\defender_updates.csv -NoTypeInformation -Encoding UTF8"
 
 REM Busca de Atualizações do Windows Update via WMI
-powershell -Command "Get-WmiObject -Class Win32_QuickFixEngineering | Where-Object {($_.InstalledOn -ge [datetime]::Parse('%startDate%')) -and ($_.InstalledOn -le [datetime]::Parse('%endDate%'))} | Select-Object @{Name='Nome';Expression={$_.Description}}, @{Name='Versão';Expression={$_.HotFixID}}, @{Name='Data';Expression={$_.InstalledOn}}, @{Name='Situação';Expression={if ($_.InstalledOn) {'Concluída'} elseif ($_.Status -eq 'Pending') {'Pendente'} elseif ($_.Status -eq 'InProgress') {'Em Progresso'} elseif ($_.Status -eq 'Failed') {'Falhou'} elseif ($_.Status -eq 'Canceled') {'Cancelada'} elseif ($_.Status -eq 'RebootRequired') {'Aguardando Reinicialização'} else {'Atrasada'}}} | Export-Csv -Path C:\temp\windows_update.csv -NoTypeInformation -Encoding UTF8"
+powershell -Command "$machineName = (hostname); Get-WmiObject -Class Win32_QuickFixEngineering | Where-Object {($_.InstalledOn -ge [datetime]::Parse('%startDate%')) -and ($_.InstalledOn -le [datetime]::Parse('%endDate%')) -and ($_.Caption -like '*microsoft.com*')} | Sort-Object InstalledOn | Select-Object @{Name='Data';Expression={$_.InstalledOn.ToString('yyyy-MM-dd HH:mm:ss')}}, @{Name='Máquina';Expression={$machineName}}, @{Name='Nome';Expression={$_.Description}}, @{Name='Versão';Expression={$_.HotFixID}}, @{Name='Situação';Expression={if ($_.InstalledOn) {'Concluída'} elseif ($_.Status -eq 'Pending') {'Pendente'} elseif ($_.Status -eq 'InProgress') {'Em Progresso'} elseif ($_.Status -eq 'Failed') {'Falhou'} elseif ($_.Status -eq 'Canceled') {'Cancelada'} elseif ($_.Status -eq 'RebootRequired') {'Aguardando Reinicialização'} else {'Atrasada'}}} | Export-Csv -Path C:\temp\windows_update.csv -NoTypeInformation -Encoding UTF8"
 
 REM Juntando os CSVs em um único arquivo com a codificação UTF-8
 
 REM Primeiramente, copiamos o cabeçalho do primeiro CSV
-for /f "tokens=1,2,3* delims=," %%A in (C:\temp\hotfix_updates.csv) do (
+for /f "tokens=1,2,3,4,5 delims=," %%A in (C:\temp\hotfix_updates.csv) do (
     set firstLine=%%A
     goto nextLine
 )
@@ -57,32 +57,32 @@ for /f "tokens=1,2,3* delims=," %%A in (C:\temp\hotfix_updates.csv) do (
 echo !firstLine! > C:\temp\all_updates.csv
 
 REM Copia os dados do arquivo HotFixes
-for /f "skip=4 tokens=1,2,3,4 delims=," %%A in (C:\temp\hotfix_updates.csv) do (
-    echo %%A; %%B; %%C; %%D >> C:\temp\all_updates.csv
+for /f "skip=1 tokens=1,2,3,4,5 delims=," %%A in (C:\temp\hotfix_updates.csv) do (
+    echo "%%A"; "%%B"; "%%C"; "%%D"; "%%E" >> C:\temp\all_updates.csv
 )
 
 REM Coloca uma linha em branco entre as tabelas
 echo. >> C:\temp\all_updates.csv
 
 REM Copia os dados do arquivo Driver Updates
-for /f "skip=1 tokens=1,2,3,4 delims=," %%A in (C:\temp\driver_updates.csv) do (
-    echo %%A; %%B; %%C; %%D >> C:\temp\all_updates.csv
+for /f "skip=1 tokens=1,2,3,4,5 delims=," %%A in (C:\temp\driver_updates.csv) do (
+   echo "%%A"; "%%B"; "%%C"; "%%D"; "%%E" >> C:\temp\all_updates.csv
 )
 
 REM Coloca uma linha em branco entre as tabelas
 echo. >> C:\temp\all_updates.csv
 
 REM Copia os dados do arquivo Defender Updates
-for /f "skip=1 tokens=1,2,3,4 delims=," %%A in (C:\temp\defender_updates.csv) do (
-    echo %%A; %%B; %%C; %%D >> C:\temp\all_updates.csv
+for /f "skip=1 tokens=1,2,3,4,5 delims=," %%A in (C:\temp\defender_updates.csv) do (
+   echo "%%A"; "%%B"; "%%C"; "%%D"; "%%E" >> C:\temp\all_updates.csv
 )
 
 REM Coloca uma linha em branco entre as tabelas
 echo. >> C:\temp\all_updates.csv
 
 REM Copia os dados do arquivo Windows Update
-for /f "skip=1 tokens=1,2,3,4 delims=," %%A in (C:\temp\windows_update.csv) do (
-    echo %%A; %%B; %%C; %%D >> C:\temp\all_updates.csv
+for /f "skip=1 tokens=1,2,3,4,5 delims=," %%A in (C:\temp\windows_update.csv) do (
+   echo "%%A"; "%%B"; "%%C"; "%%D"; "%%E" >> C:\temp\all_updates.csv
 )
 
 REM Coloca uma linha em branco entre as tabelas
