@@ -87,6 +87,16 @@ if not exist C:\temp\%hostName%\windows_update.csv (
 )
 echo -
 
+REM Busca de Atualizações do Malicious Software Removal
+powershell -Command "if (-not (Test-Path 'C:\temp\%hostName%')) { New-Item -ItemType Directory -Path 'C:\temp\%hostName%' | Out-Null }; $filePath = 'C:\temp\%hostName%\mrt_updates.csv'; $logFile = 'C:\temp\%hostName%\resultados_busca.log'; if (Test-Path $filePath) { Remove-Item $filePath -Force }; @('Data,Máquina,Fonte,Versão,Situação') | Out-File -FilePath $filePath -Encoding UTF8; '--- Início da execução: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') | Out-File -FilePath $logFile -Append; try { $startDate = [datetime]::Parse('%startDate%'); $endDate = [datetime]::Parse('%endDate%'); $logs = Get-Content -Path 'C:\Windows\Debug\mrt.log' | Select-String -Pattern 'Malicious Software Removal Tool|Results Summary|Started On'; $updates = @(); $currentUpdate = @{'Data'=$null; 'Máquina'=$null; 'Fonte'='Malicious Software Removal Tool'; 'Versão'='N/A'; 'Situação'='Indefinida'}; foreach ($line in $logs) { if ($line -match 'Started On (.+)') { $currentUpdate['Data'] = [datetime]::ParseExact($matches[1], 'ddd MMM dd HH:mm:ss yyyy', $null); if ($currentUpdate['Data'] -ge $startDate -and $currentUpdate['Data'] -le $endDate) { $currentUpdate['Máquina'] = (hostname); $currentUpdate['Situação'] = 'Concluída'; $updates += $currentUpdate; $currentUpdate = @{'Data'=$null; 'Máquina'=$null; 'Fonte'='Malicious Software Removal Tool'; 'Versão'='N/A'; 'Situação'='Indefinida'}}}; if ($updates.Count -gt 0) { $updates | Export-Csv -Path $filePath -NoTypeInformation -Append -Encoding UTF8; 'Atualizações do MSRT processadas com sucesso.' | Out-File -FilePath $logFile -Append } else { 'Nenhuma atualização do MSRT encontrada no intervalo de datas especificado.' | Out-File -FilePath $logFile -Append }} catch { 'Erro ao acessar informações de atualizações: ' + $_.Exception.Message | Out-File -FilePath $logFile -Append }"
+if not exist C:\temp\%hostName%\malicious_software_updates.csv (
+    echo Arquivo malicious_software_updates.csv não foi criado. >> C:\temp\%hostName%\errors.log
+    call :log_error "Malicious Software Removal" "Erro ao buscar atualizações de Malicious Software Removal"
+) else (
+    echo O comando do Malicious Software Removal foi processado com sucesso.
+)
+echo -
+
 REM Juntando os CSVs em um único arquivo com a codificação UTF-8
 
 REM Primeiramente, copiamos o cabeçalho do primeiro CSV
@@ -123,6 +133,14 @@ echo. >> C:\temp\%hostName%\all_updates.csv
 
 REM Copia os dados do arquivo Windows Update
 for /f "skip=1 tokens=1,2,3,4,5 delims=," %%A in (C:\temp\%hostName%\windows_update.csv) do (
+   echo "%%A"; "%%B"; "%%C"; "%%D"; "%%E" >> C:\temp\%hostName%\all_updates.csv
+)
+
+REM Coloca uma linha em branco entre as tabelas
+echo. >> C:\temp\%hostName%\all_updates.csv
+
+REM Copia os dados do arquivo Malicious Software Removal
+for /f "skip=1 tokens=1,2,3,4,5 delims=," %%A in (C:\temp\%hostName%\malicious_software_updates.csv) do (
    echo "%%A"; "%%B"; "%%C"; "%%D"; "%%E" >> C:\temp\%hostName%\all_updates.csv
 )
 
