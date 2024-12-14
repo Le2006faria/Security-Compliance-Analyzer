@@ -19,8 +19,15 @@ set /p startDate=
 echo Digite a data final (yyyy-MM-dd):
 set /p endDate=
 
-REM Converte a data inicial para o formato que o MSRT usa (Mon Jan 01 00:00:00 2024)
-REM A data original está no formato yyyy-MM-dd, precisamos transformar no formato dd-MMM-yyyy
+REM Converte as datas para o formato YYYYMMDD para comparação
+set startDateNum=%startDate:~0,4%%startDate:~5,2%%startDate:~8,2%
+set endDateNum=%endDate:~0,4%%endDate:~5,2%%endDate:~8,2%
+
+REM Verifica se a data inicial é anterior à data final
+if %startDateNum% geq %endDateNum% (
+    echo A data inicial deve ser anterior à data final. Tente novamente.
+    goto START
+)
 
 REM Pega o dia, mês e ano da data inicial
 set dayStart=%startDate:~8,2%
@@ -32,10 +39,37 @@ set dayEnd=%endDate:~8,2%
 set monthEnd=%endDate:~5,2%
 set yearEnd=%endDate:~0,4%
 
-REM Mapeia o mês para o formato abreviado
+REM Mapeia o mês para o formato abreviado (substituindo os números diretamente)
 set "months=Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec"
-for /f "tokens=%monthStart% delims= " %%a in ("%months%") do set monthNameStart=%%a
-for /f "tokens=%monthEnd% delims= " %%a in ("%months%") do set monthNameEnd=%%a
+set monthNameStart=  
+set monthNameEnd=  
+
+REM Corrige o mapeamento diretamente, sem precisar de formatação extra
+if "%monthStart%"=="01" set monthNameStart=Jan
+if "%monthStart%"=="02" set monthNameStart=Feb
+if "%monthStart%"=="03" set monthNameStart=Mar
+if "%monthStart%"=="04" set monthNameStart=Apr
+if "%monthStart%"=="05" set monthNameStart=May
+if "%monthStart%"=="06" set monthNameStart=Jun
+if "%monthStart%"=="07" set monthNameStart=Jul
+if "%monthStart%"=="08" set monthNameStart=Aug
+if "%monthStart%"=="09" set monthNameStart=Sep
+if "%monthStart%"=="10" set monthNameStart=Oct
+if "%monthStart%"=="11" set monthNameStart=Nov
+if "%monthStart%"=="12" set monthNameStart=Dec
+
+if "%monthEnd%"=="01" set monthNameEnd=Jan
+if "%monthEnd%"=="02" set monthNameEnd=Feb
+if "%monthEnd%"=="03" set monthNameEnd=Mar
+if "%monthEnd%"=="04" set monthNameEnd=Apr
+if "%monthEnd%"=="05" set monthNameEnd=May
+if "%monthEnd%"=="06" set monthNameEnd=Jun
+if "%monthEnd%"=="07" set monthNameEnd=Jul
+if "%monthEnd%"=="08" set monthNameEnd=Aug
+if "%monthEnd%"=="09" set monthNameEnd=Sep
+if "%monthEnd%"=="10" set monthNameEnd=Oct
+if "%monthEnd%"=="11" set monthNameEnd=Nov
+if "%monthEnd%"=="12" set monthNameEnd=Dec
 
 REM Cria as variáveis de data no formato que o MSRT usa
 set novaDataStart=%monthNameStart% %dayStart% %yearStart%
@@ -47,6 +81,7 @@ for /f "tokens=1" %%A in ('powershell -Command "[System.Threading.Thread]::Curre
 
 REM Agora a data estará no formato completo: Mon Jan 01 00:00:00 2024
 REM Coloca o nome do dia da semana (em inglês) no início da data e coloca a hora no final
+echo .
 set novaDataStart=%weekdayStart% %novaDataStart% 00:00:00
 set novaDataEnd=%weekdayEnd% %novaDataEnd% 00:00:00
 
@@ -117,7 +152,7 @@ if not exist C:\temp\%hostName%\windows_update.csv (
 echo -
 
 REM Busca de Atualizações do Malicious Software Removal
-powershell -Command "if (-not (Test-Path 'C:\temp\%hostname%')) { New-Item -ItemType Directory -Path 'C:\temp\%hostname%' | Out-Null }; $filePath = 'C:\temp\%hostname%\malicious_software_updates.csv'; $logFile = 'C:\temp\%hostname%\resultados_busca.log'; if (Test-Path $filePath) { Remove-Item $filePath -Force }; @('Data,Máquina,Fonte,Versão,Situação') | Out-File -FilePath $filePath -Encoding UTF8; '--- Início da execução: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') | Out-File -FilePath $logFile -Append; try { $logs = Get-Content -Path 'C:\Windows\Debug\mrt.log' | Select-String -Pattern 'Malicious Software Removal Tool|Results Summary|Started On'; $updates = @(); $currentUpdate = @{ 'Data' = $null; 'Máquina' = $null; 'Fonte' = 'Malicious Software Removal Tool'; 'Versão' = 'N/A'; 'Situação' = $null }; foreach ($line in $logs) { if ($line -match 'Started On (.+)') { $currentUpdate['Data'] = $matches[1]; $currentUpdate['Máquina'] = (hostname); 'Data extraída: ' + $currentUpdate['Data'] | Out-File -FilePath $logFile -Append }; if ($line -match '(?i)(No infection found|Successfully Submitted Heartbeat Report)') { $currentUpdate['Situação'] = 'Concluída'; 'Situação: Concluída' | Out-File -FilePath $logFile -Append } elseif ($line -match '(?i)(Error occurred|Scan failed)') { $currentUpdate['Situação'] = 'Falha'; 'Situação: Falha' | Out-File -FilePath $logFile -Append } elseif ($line -match '(?i)Results Summary') { $currentUpdate['Situação'] = 'Concluída'; 'Situação: Concluída' | Out-File -FilePath $logFile -Append }; if ($currentUpdate['Data'] -and $currentUpdate['Máquina'] -and $currentUpdate['Situação']) { $updates += New-Object PSCustomObject -Property @{ 'Data' = $currentUpdate['Data']; 'Máquina' = $currentUpdate['Máquina']; 'Fonte' = $currentUpdate['Fonte']; 'Versão' = $currentUpdate['Versão']; 'Situação' = $currentUpdate['Situação'] }; $currentUpdate = @{ 'Data' = $null; 'Máquina' = $null; 'Fonte' = 'Malicious Software Removal Tool'; 'Versão' = 'N/A'; 'Situação' = $null } }; }; if ($updates.Count -gt 0) { $updates | Export-Csv -Path $filePath -NoTypeInformation -Append -Encoding UTF8; 'Atualizações do MSRT processadas com sucesso.' | Out-File -FilePath $logFile -Append } else { 'Nenhuma atualização do MSRT encontrada no intervalo de datas especificado.' | Out-File -FilePath $logFile -Append }} catch { 'Erro ao acessar informações de atualizações: ' + $_.Exception.Message | Out-File -FilePath $logFile -Append }"
+powershell -Command "if (-not (Test-Path 'C:\temp\%hostname%')) { New-Item -ItemType Directory -Path 'C:\temp\%hostname%' | Out-Null }; $filePath = 'C:\temp\%hostname%\malicious_software_updates.csv'; $logFile = 'C:\temp\%hostname%\resultados_busca.log'; if (Test-Path $filePath) { Remove-Item $filePath -Force }; @('Data Início,Máquina,Fonte,Versão,Situação') | Out-File -FilePath $filePath -Encoding UTF8; '--- Início da execução: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') | Out-File -FilePath $logFile -Append; try { if (-not (Test-Path 'C:\Windows\Debug\mrt.log')) { 'Arquivo mrt.log não encontrado. Nenhuma atualização processada.' | Out-File -FilePath $logFile -Append } else { $logs = Get-Content -Path 'C:\Windows\Debug\mrt.log'; $updates = @(); $currentUpdate = @{ 'Data Início' = $null; 'Máquina' = $null; 'Fonte' = 'Malicious Software Removal Tool'; 'Versão' = $null; 'Situação' = $null }; $startDate = [datetime]::ParseExact('%novaDataStart%', 'ddd MMM dd HH:mm:ss yyyy', [System.Globalization.CultureInfo]::GetCultureInfo('en-US')); foreach ($line in $logs) { if ($line -match '^Started On (.+)$') { $dateStart = $matches[1].Trim(); try { $currentUpdate['Data Início'] = [datetime]::ParseExact($dateStart, 'ddd MMM dd HH:mm:ss yyyy', [System.Globalization.CultureInfo]::GetCultureInfo('en-US')) } catch { $currentUpdate['Data Início'] = $dateStart } } elseif ($line -match '^Microsoft Windows Malicious Software Removal Tool v([\d\.]+)') { $currentUpdate['Versão'] = $matches[1] } elseif ($line -match '(?i)(No infection found|Successfully Submitted Heartbeat Report)') { $currentUpdate['Situação'] = 'Concluída' } elseif ($line -match '(?i)(Error occurred|Scan failed)') { $currentUpdate['Situação'] = 'Falha' }; if ($currentUpdate['Data Início'] -and $currentUpdate['Situação']) { if ($currentUpdate['Data Início'] -ge $startDate) { $currentUpdate['Máquina'] = (hostname); $updates += New-Object PSCustomObject -Property @{ 'Data Início' = $currentUpdate['Data Início']; 'Máquina' = $currentUpdate['Máquina']; 'Fonte' = $currentUpdate['Fonte']; 'Versão' = $currentUpdate['Versão']; 'Situação' = $currentUpdate['Situação'] } } $currentUpdate = @{ 'Data Início' = $null; 'Máquina' = $null; 'Fonte' = 'Malicious Software Removal Tool'; 'Versão' = $null; 'Situação' = $null } }; }; if ($updates.Count -gt 0) { $updates | Export-Csv -Path $filePath -NoTypeInformation -Append -Encoding UTF8; 'Atualizações do MSRT processadas com sucesso.' | Out-File -FilePath $logFile -Append } else { 'Nenhuma atualização do MSRT encontrada no intervalo de datas especificado.' | Out-File -FilePath $logFile -Append } } } catch { 'Erro ao acessar informações de atualizações: ' + $_.Exception.Message | Out-File -FilePath $logFile -Append }"
 if not exist C:\temp\%hostName%\malicious_software_updates.csv (
     echo Arquivo malicious_software_updates.csv não foi criado. >> C:\temp\%hostName%\errors.log
     call :log_error "Malicious Software Removal" "Erro ao buscar atualizações de Malicious Software Removal"
